@@ -1,0 +1,91 @@
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <ctype.h>
+#define THREADS 3
+#define PORT 8000
+
+struct parameter
+{
+    int fd,acceptFD;
+    struct sockaddr_in address;
+};
+
+void *op(int* p);
+int main()
+{
+    struct parameter *p =(struct parameter*)malloc(sizeof(struct parameter));
+
+    p->fd = socket(AF_INET,SOCK_STREAM,0);
+printf("fd=%d\n",p->fd);
+
+    p->address.sin_family = AF_INET;
+    p->address.sin_port = htons(PORT);
+    p->address.sin_addr.s_addr = htonl(INADDR_ANY);
+    bind(p->fd, (struct sockaddr*) &p->address, sizeof(p->address));
+    listen(p->fd,5);
+
+    printf("=======server is on.======\n");
+
+    int i=0;
+    int newT;
+    pthread_t threads[THREADS];
+    while(i < THREADS)
+    {
+	struct sockaddr* clients = (struct sockddr*)malloc(sizeof(struct sockaddr));
+	int *aFD = malloc(sizeof(int));
+        *aFD = accept(p->fd,(struct sockaddr*)clients,NULL);
+	if(*aFD == -1 )
+	{
+		continue;
+	}
+        newT = pthread_create(&threads[i],NULL,(void*)op,aFD);
+        if(newT)
+        {
+            printf("main:pthread_create error!\n");
+            break;
+        }
+        i++;
+    }
+
+    i--;
+    while(i >= 0)
+    {
+        pthread_join(threads[i],NULL);
+        i--;
+    }
+
+    close(p->fd);
+    free(p);
+    return 0;
+}
+
+
+void *op(int* p)
+{
+    while(1)
+    {
+	char *buf = malloc(64);
+	if(*p == -1)
+	{
+		perror("accept error");
+	}
+	int rec_len=0;
+	do{
+		if((rec_len = recv(*p, buf, 64,0)) == -1) {
+			perror("recv error");
+			exit(1);
+		}
+		/**
+		  if(rec_len >0)
+		  printf("received %d bytes, and the content is:%s\n",rec_len,buf);
+		  */
+	}
+        while(rec_len > 0);
+    close(*p);
+    }
+}
