@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
-#define THREADS 3
+#define RECV_SIZE 64
 #define PORT 8000
 
 struct parameter
@@ -15,21 +15,17 @@ struct parameter
     struct sockaddr_in address;
 };
 
-void trans(unsigned int ip);
 void op(struct parameter* p);
 int main()
 {
     struct parameter *p =(struct parameter*)malloc(sizeof(struct parameter));
 
     p->fd = socket(AF_INET,SOCK_STREAM,0);
-    printf("fd=%d\n",p->fd);
-
     p->address.sin_family = AF_INET;
     p->address.sin_port = htons(PORT);
     p->address.sin_addr.s_addr = htonl(INADDR_ANY);
     bind(p->fd, (struct sockaddr*) &p->address, sizeof(p->address));
     listen(p->fd,5);
-    trans(p->address.sin_addr.s_addr);
     printf("=======server is on.======\n");
     while(1)
     {
@@ -57,10 +53,10 @@ void op(struct parameter* p)
 {
     while(1)
     {
-	char *buf = malloc(64);
+	char *buf = malloc(RECV_SIZE);
 	int rec_len=0;
 	do{
-		if((rec_len = recv(p->acceptFD, buf, 64, 0)) == -1) {
+		if((rec_len = recv(p->acceptFD, buf, RECV_SIZE, 0)) == -1) {
 return;
 		}
 		/**
@@ -71,15 +67,4 @@ return;
         while(rec_len > 0);
     close(p->acceptFD);
     }
-}
-void trans(unsigned int ip)
-{
-	int x[4];
-	char c=0;
-	while(c<4)
-	{
-		x[c]=(ip >> c*8) & 0xff;
-		c++;
-	}
-	printf("server:%d.%d.%d.%d\n",x[0],x[1],x[2],x[3]);
 }
