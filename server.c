@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
-#define RECV_SIZE 64
+#define RECV_SIZE 1024
 #define PORT 8000
 #define PROS_NUMBER 32
 
@@ -50,18 +50,22 @@ int main()
     }
     close(p->fd);
     free(p);
+    p=0;
     return 0;
 }
 
 void op(struct parameter* p)
 {
+	char *buf = malloc(RECV_SIZE);
+	int rec_len= 1;
 	while(1)
 	{
-		char *buf = malloc(RECV_SIZE);
-		int rec_len= 1;
 		if((rec_len = recv(p->acceptFD, buf, RECV_SIZE, 0)) == -1) {
 			return;
 		}
-		if(rec_len == 0) break;
+		if(rec_len == 0) 
+			break;
 	}
+	free(buf);
+	buf=0;
 }
