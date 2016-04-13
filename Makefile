@@ -1,2 +1,2 @@
 default:
-	gcc server.c -g -o serveranother -lpthread
+	gcc server.c -g -o server -lpthread

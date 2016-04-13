@@ -8,6 +8,7 @@
 #include <ctype.h>
 #define RECV_SIZE 64
 #define PORT 8000
+#define PROS_NUMBER 32
 
 struct parameter
 {
@@ -27,20 +28,23 @@ int main()
     bind(p->fd, (struct sockaddr*) &p->address, sizeof(p->address));
     listen(p->fd,5);
     printf("=======server is on.======\n");
-    while(1)
+    int pn=PROS_NUMBER;
+    while(pn-- > 0)
     {
 	    if(fork() == 0){
 		    struct sockaddr_in client;
 		    int client_length = sizeof(client);
-		    p->acceptFD = accept(p->fd,(struct sockaddr*)&client,(socklen_t *)(&client_length));
-		    if(p->acceptFD == -1)
+		    while(1)
 		    {
+			    p->acceptFD = accept(p->fd,(struct sockaddr*)&client,(socklen_t *)(&client_length));
 
-			    perror("acceptFD");
-			    printf("%d",p->acceptFD);
+			    if(p->acceptFD == -1)
+			    {
+				    perror("acceptFD");
+				    printf("%d",p->acceptFD);
+			    }
+			    op(p);
 		    }
-		    op(p);
-		    close(p->acceptFD);
 	    }
     }
     close(p->fd);
@@ -48,23 +52,18 @@ int main()
     return 0;
 }
 
-
 void op(struct parameter* p)
 {
     while(1)
     {
 	char *buf = malloc(RECV_SIZE);
-	int rec_len=0;
+	int rec_len= -1;
 	do{
 		if((rec_len = recv(p->acceptFD, buf, RECV_SIZE, 0)) == -1) {
-return;
+			return;
 		}
-		/**
-		  if(rec_len >0)
-		  printf("received %d bytes, and the content is:%s\n",rec_len,buf);
-		  */
 	}
         while(rec_len > 0);
-    close(p->acceptFD);
     }
+    close(p->acceptFD);
 }
