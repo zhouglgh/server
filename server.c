@@ -44,6 +44,7 @@ int main()
 				    printf("%d",p->acceptFD);
 			    }
 			    op(p);
+			    close(p->acceptFD);
 		    }
 	    }
     }
@@ -54,16 +55,13 @@ int main()
 
 void op(struct parameter* p)
 {
-    while(1)
-    {
-	char *buf = malloc(RECV_SIZE);
-	int rec_len= -1;
-	do{
+	while(1)
+	{
+		char *buf = malloc(RECV_SIZE);
+		int rec_len= 1;
 		if((rec_len = recv(p->acceptFD, buf, RECV_SIZE, 0)) == -1) {
 			return;
 		}
+		if(rec_len == 0) break;
 	}
-        while(rec_len > 0);
-    }
-    close(p->acceptFD);
 }
